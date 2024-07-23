@@ -41,13 +41,11 @@ def AddRow():
         s = inp.get()
         if (s==""): row.append(None)
         else: row.append(s)
-    print(row)
     database.WRITE_ROW(database.db_name, TABLE, tuple(row))
     update_table(1)
 
 def DeleteRow():
     row = tree_table.item(tree_table.selection()[0])["values"]
-    print(row)
     database.DELETE_ROW(database.db_name, TABLE, row)
     update_table(1)
 

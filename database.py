@@ -45,7 +45,7 @@ def WRITE_ROW(db_name:str, table:str, data: tuple) -> None:
     DB.commit()
     cur.close()
 
-def DELETE_ROW(db_name:str, table:str, data: list[Any]) -> None:
+def DELETE_ROW_BY_KEYPOS(db_name:str, table:str, key_pos:int, key:Any) -> None:
     global DB
     cur = DB.cursor()
     cur.execute("USE {0};".format(db_name))
@@ -53,16 +53,77 @@ def DELETE_ROW(db_name:str, table:str, data: list[Any]) -> None:
     field_names = []
     for field in fields:
         field_names.append(field[0])
-    if (len(field_names) != len(data)): return
-    command = "DELETE FROM {0} ".format(table) + "WHERE " + field_names[0] + "="
-    if (type(data[0])==str):
-        command += '"' + data[0] + '"'
+    if (len(field_names) <= key_pos): return
+    command = "DELETE FROM {0} ".format(table) + "WHERE " + field_names[key_pos] + "="
+    if (type(key)==str):
+        command += '"' + key + '"'
     else:
-        command += str(data[0])
+        command += str(key)
     cur.execute(command)
     DB.commit()
     cur.close()
+
+def DELETE_ROW_BY_KEY(db_name:str, table:str, key_name:str, key:Any) -> None:
+    global DB
+    cur = DB.cursor()
+    cur.execute("USE {0};".format(db_name))
+    command = "DELETE FROM {0} ".format(table) + "WHERE " + key_name + "="
+    if (type(key)==str):
+        command += '"' + key + '"'
+    else:
+        command += str(key)
+    command += ";"
+    cur.execute(command)
+    DB.commit()
+    cur.close()
+
+def DELETE_ROW_BY_KEYS(db_name:str, table:str, key_names:list[str], keys:list[Any]) -> None:
+    global DB
+    if len(key_names)!=len(keys): return
+    cur = DB.cursor()
+    cur.execute("USE {0};".format(db_name))
+    command = "DELETE FROM {0} ".format(table) + "WHERE "
+    for i in range(len(keys)):
+        key_name = key_names[i]
+        key = keys[i]
+        command += key_name + "="
+        if (type(key)==str):
+            command += '"' + key + '"'
+        else:
+            command += str(key)
+        if (i!=len(keys)-1): command+=" AND"
+        command += " "
+    command += ";"
+    cur.execute(command)
+    DB.commit()
+    cur.close()
+
+def DELETE_ROW(db_name:str, table:str, row:list[Any]) -> None:
+    global DB
     
+    cur = DB.cursor()
+    cur.execute("USE {0};".format(db_name))
+    fields = GET_FIELDS(db_name, table)
+    if len(fields)!=len(row): return
+    field_names = []
+    for field in fields:
+        field_names.append(field[0])
+    command = "DELETE FROM {0} ".format(table) + "WHERE "
+    for i in range(len(row)):
+        key_name = field_names[i]
+        key = row[i]
+        command += key_name + "="
+        if (type(key)==str):
+            command += '"' + key + '"'
+        else:
+            command += str(key)
+        if (i!=len(row)-1): command+=" AND"
+        command += " "
+    command += ";"
+    cur.execute(command)
+    DB.commit()
+    cur.close()
+
 def CHECK_CONNECTION() -> bool:
     if (DB == None): return False
     return DB.is_connected()
@@ -80,6 +141,15 @@ def DISCONNECT() -> None:
         DB.commit()
         DB.disconnect()
         DB.close()
+
+def EXEC(command: str, multi:bool = True) -> list[Any]:
+    global DB
+    cur = DB.cursor()
+    cur.execute(command, multi= multi)
+    result = cur.fetchall()
+    DB.commit()
+    cur.close()
+    return result
 
 def main():
     CONNECT(host, username, password)
