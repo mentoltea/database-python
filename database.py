@@ -37,6 +37,53 @@ def READ_ALL(db_name:str, table: str) -> list[Any]:
     cur.close()
     return result
 
+def READ_BY_KEY(db_name:str, table:str, key_name:str, key:Any) -> list[Any]:
+    global DB
+    cur = DB.cursor()
+    cur.execute("USE {0};".format(db_name))
+    command = "SELECT * FROM {0} ".format(table) + "WHERE " + key_name + "="
+    if (type(key)==str):
+        command += '"' + key + '"'
+    else:
+        command += str(key)
+    command += ";"
+    cur.execute(command)
+    result = cur.fetchall()
+    cur.close()
+    return result
+
+def READ_BY_KEYS(db_name:str, table:str, key_names:list[str], keys:list[Any]) -> list[Any]:
+    global DB
+    if len(key_names)!=len(keys): return
+    cur = DB.cursor()
+    cur.execute("USE {0};".format(db_name))
+    command = "SELECT * FROM {0} ".format(table) + "WHERE "
+    for i in range(len(keys)):
+        key_name = key_names[i]
+        key = keys[i]
+        command += key_name + "="
+        if (type(key)==str):
+            command += '"' + key + '"'
+        else:
+            command += str(key)
+        if (i!=len(keys)-1): command+=" AND"
+        command += " "
+    command += ";"
+    cur.execute(command)
+    result = cur.fetchall()
+    cur.close()
+    return result
+
+def READ_CUSTOM(db_name:str, table:str, where_condition:str) -> list[Any]:
+    global DB
+    cur = DB.cursor()
+    cur.execute("USE {0};".format(db_name))
+    command = "SELECT * FROM {0} ".format(table) + " " + where_condition + ";"
+    cur.execute(command)
+    result = cur.fetchall()
+    cur.close()
+    return result
+
 def WRITE_ROW(db_name:str, table:str, data: tuple) -> None:
     global DB
     cur = DB.cursor()
@@ -124,6 +171,15 @@ def DELETE_ROW(db_name:str, table:str, row:list[Any]) -> None:
     DB.commit()
     cur.close()
 
+def DELETE_CUSTOM(db_name:str, table:str, where_condition:str) -> None:
+    global DB
+    cur = DB.cursor()
+    cur.execute("USE {0};".format(db_name))
+    command = "DELETE FROM {0} ".format(table) + " " + where_condition + ";"
+    cur.execute(command)
+    DB.commit()
+    cur.close()
+
 def CHECK_CONNECTION() -> bool:
     if (DB == None): return False
     return DB.is_connected()
@@ -153,18 +209,19 @@ def EXEC(command: str, multi:bool = True) -> list[Any]:
 
 def main():
     CONNECT(host, username, password)
-
+    
     tables = GET_TABLES(db_name)
     for table in tables:
-        print('\n'*2+"#"*10)
+        print('\n'*2+"#"*30)
         print('* '+table, end=" *\n")
-        rows = READ_ALL(db_name, table)
+        rows = READ_BY_KEYS(db_name, table, ["age"], [55])
+        #rows = READ_ALL(db_name, table)
         for row in rows:
             print('| ', end="")
             for x in row:
                 print(x, end=" | ")
-            print('\n'+'-'*10)
-        print("#"*10+'\n')
+            print('\n'+'-'*30)
+        print("#"*30+'\n')
     
     DISCONNECT()
     
