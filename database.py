@@ -2,6 +2,7 @@ from typing import *
 import mysql.connector as sql
 import read_settings
 
+
 settings = read_settings.read()
 host = settings["host"]
 username =  settings["username"]
@@ -196,7 +197,6 @@ def DISCONNECT() -> None:
     if (DB != None):
         DB.commit()
         DB.disconnect()
-        DB.close()
 
 def EXEC(command: str, multi:bool = True) -> list[Any]:
     global DB
