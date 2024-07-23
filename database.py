@@ -1,5 +1,7 @@
 from typing import *
 import mysql.connector as sql
+from mysql.connector.locales.eng import client_error
+import mysql
 import read_settings
 
 
@@ -8,6 +10,7 @@ host = settings["host"]
 username =  settings["username"]
 password = settings["password"]
 db_name = settings["db_name"]
+connect_timeout = int(settings["connect_timeout"])
 
 DB =  None #sql.connect(host= host, 
      #           user= username,
@@ -187,16 +190,23 @@ def CHECK_CONNECTION() -> bool:
 
 def CONNECT(host: str, username: str, password: str) -> None:
     global DB
-    if (DB != None): DB.close()
-    DB = sql.connect(host= host, 
+    if (DB != None): DISCONNECT()
+    try:
+        print("Connecting {0}...".format(host))
+        DB = sql.connect(host= host,
                 user= username,
-                passwd= password)
+                passwd= password,
+                connect_timeout= connect_timeout)
+        print("Connected succesfully")
+    except sql.Error as err:
+        print(err)
+        DB = None
 
 def DISCONNECT() -> None:
     global DB
     if (DB != None):
         DB.commit()
-        DB.disconnect()
+        DB.close()
 
 def EXEC(command: str, multi:bool = True) -> list[Any]:
     global DB
@@ -209,6 +219,9 @@ def EXEC(command: str, multi:bool = True) -> list[Any]:
 
 def main():
     CONNECT(host, username, password)
+    if not CHECK_CONNECTION():
+        print("Not connected")
+        return
     
     tables = GET_TABLES(db_name)
     for table in tables:

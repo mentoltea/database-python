@@ -1,11 +1,14 @@
 from tkinter import *
 from tkinter import ttk
 import database
+import sys
+
 
 database.CONNECT(database.host, database.username, database.password)
 if not database.CHECK_CONNECTION():
     print("Cannot connect to database")
-    input("Press enter to continue...")
+    input("Press enter to exit...")
+    sys.exit(0)
 
 TABLES = database.GET_TABLES(database.db_name)
 TABLE = None
@@ -82,21 +85,23 @@ def update_table(event) -> None:
     tree_table.column("#0", width=0,  stretch=NO)
     tree_table.heading("#0",text="",anchor=CENTER)
     j = 0
-    for name in field_names:
+    for elem in fields:
+        name = elem[0]
+        vartype = elem[1]
         tree_table.column(name, anchor= W, width= 50)
         tree_table.heading(name, text= name, anchor= W)
         if (j >= len(TextInputs) or len(TextInputs)==0):
             entry = Entry(root)
             entry.place(x=j*200+140, y=280, width=170, height=20)
-            var = StringVar(value= name)
+            var = StringVar(value= name + "\n" + vartype)
             text = Label(root, textvariable=var)
-            text.place(x=j*200+140, y=320, width=170, height=20)
+            text.place(x=j*200+140, y=320, width=170, height=40)
             TextInputs.append(entry)
             TextOutputs.append(text)
             TextVars.append(var)
         else:
             TextInputs[j].delete(0, END)
-            TextVars[j].set(name)
+            TextVars[j].set(name + "\n" + vartype)
         j += 1
     while (len(TextInputs)>j):
         TextInputs[len(TextInputs)-1].place_forget()
